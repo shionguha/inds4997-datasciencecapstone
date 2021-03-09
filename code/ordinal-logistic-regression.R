@@ -32,7 +32,8 @@ ggplot(data, aes(x = score_text, y = age, fill = score_text)) +
   ylab('Age') + labs(fill= 'Compas Score') + 
   geom_boxplot(size = .75) +
   facet_grid(race ~ sex, margins = FALSE) + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+  scale_fill_brewer(palette = "Reds")
 
 # Create Ordinal Logistic Model
 model_fit <- polr(score_text ~ race + age + sex, data = data, Hess = TRUE)
