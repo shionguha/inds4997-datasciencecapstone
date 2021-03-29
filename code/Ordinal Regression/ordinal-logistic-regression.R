@@ -34,12 +34,12 @@ data$c_jail_out <- ymd_hms(data$c_jail_out)
 data <- data %>% rowwise() %>%
   mutate(c_time_in_jail = difftime(c_jail_out, c_jail_in, units = "days"))
 
-# Remove rows without a time for jail
-data <- data[!(is.na(data$c_time_in_jail) | data$c_time_in_jail==""), ]
+# Set rows without a time for jail to 0
+data$c_time_in_jail[is.na(data$c_time_in_jail)] <- 0
 
 # Change time spent in jail's data type to be a number
 data <- transform(data, c_time_in_jail = as.numeric(c_time_in_jail))
-          
+
 ## Data Processing / Analysis ##
 
 # Create plot of data
