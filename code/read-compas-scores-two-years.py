@@ -38,21 +38,12 @@ class Person:
             pass
 
     @property
-    def lifetime(self):
-        memo = 0
-        for it in self.__rows:
-            memo += int(it['end']) - int(it['start'])
-        return memo
-
-    @property
     def recidivist(self):
-        return (self.__rows[0]['is_recid'] == "1" and
-                self.lifetime <= 730)
+        return self.__rows[0]['is_recid'] == "1"
 
     @property
     def violent_recidivist(self):
-        return (self.__rows[0]['is_violent_recid'] == "1" and
-                self.lifetime <= 730)
+        return self.__rows[0]['is_violent_recid'] == "1"
 
     @property
     def low(self):
@@ -100,9 +91,7 @@ class Person:
 
     @property
     def valid(self):
-        return (self.__rows[0]['is_recid'] != "-1" and
-                (self.recidivist and self.lifetime <= 730) or
-                self.lifetime > 730)
+        return self.__rows[0]['is_recid'] != "-1"
 
     @property
     def compas_felony(self):
@@ -194,9 +183,9 @@ def get_categories(people, attribute):
 def get_person(person):
     return(person.rows[0])
 
-def read_two_year_files():
+def read_files():
     people = []
-    with open("./data/compas-scores-two-years.csv") as f:
+    with open("./data/compas-scores.csv") as f:
         reader = PeekyReader(DictReader(f))
         try:
             while True:
@@ -208,40 +197,12 @@ def read_two_year_files():
     return people
 
 # prints all of the data
-def print_two_year_files(people):
+def print_files(people):
     for i in people:
         print(get_person(i))
 
 if __name__ == "__main__":
-    people = read_two_year_files()
+    people = read_files()
     
-    # dictionaries containing number of people considered 'Low', 'Medium', or 'High' risk based on age category
-    less_than_25 = {'Low': 0, 'Medium': 0, 'High': 0}
-    twentyfive_to_fortyfive = {'Low': 0, 'Medium': 0, 'High': 0}
-    greater_than_45 = {'Low': 0, 'Medium': 0, 'High': 0}
-    for i in people:
-        age = get_cell(i, 'age_cat')
-        score = get_cell(i, 'score_text')
-        if(age == 'Less than 25'):
-            less_than_25[score] += 1
-        elif(age == '25 - 45'):
-            twentyfive_to_fortyfive[score] += 1
-        else:
-            greater_than_45[score] += 1
-
-    # prints percentage of low, medium, and high risks for people based on age
-
-    print('Less than 25')
-    print('Low:', less_than_25['Low'] / sum(less_than_25.values()))
-    print('Medium:', less_than_25['Medium'] / sum(less_than_25.values()))
-    print('High:', less_than_25['High'] / sum(less_than_25.values()), '\n')
-
-    print('25 - 45')
-    print('Low:', twentyfive_to_fortyfive['Low'] / sum(twentyfive_to_fortyfive.values()))
-    print('Medium:', twentyfive_to_fortyfive['Medium'] / sum(twentyfive_to_fortyfive.values()))
-    print('High:', twentyfive_to_fortyfive['High'] / sum(twentyfive_to_fortyfive.values()), '\n')
-
-    print('Greater than 45')
-    print('Low:', greater_than_45['Low'] / sum(greater_than_45.values()))
-    print('Medium:', greater_than_45['Medium'] / sum(greater_than_45.values()))
-    print('High:', greater_than_45['High'] / sum(greater_than_45.values()))
+    print(get_categories(people, 'r_charge_desc'))
+    
