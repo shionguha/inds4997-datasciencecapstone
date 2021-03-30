@@ -204,5 +204,6 @@ def print_files(people):
 if __name__ == "__main__":
     people = read_files()
     
+    # used to get all of the charges for making the violent column
     print(get_categories(people, 'r_charge_desc'))
     
