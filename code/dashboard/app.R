@@ -104,54 +104,91 @@ shinyApp(
             elevation = 3,
             sidebarMenu(
                 menuItem(
-                    "Ordinal Regression",
-                    tabName = "ordreg",
+                    "Ordinal Regression Graphs",
+                    tabName = "ordreggraphs",
                     icon = icon("chart-bar")
+                ),
+                menuItem(
+                    "Ordinal Regression Model",
+                    tabName = "ordregmodel",
+                    icon = icon("calculator")
                 )
             )
         ),
         body = dashboardBody(
-            bs4Card(
-                title = "Ordinal Regression Graph",
-                maximizable = TRUE,
-                width = 12,
-                selectizeInput(
-                    inputId = "races", 
-                    label = "Select a race", 
-                    choices = unique(recData$race), 
-                    selected = "Caucasian",
-                    multiple = FALSE
+            tabItems(
+                tabItem(tabName = "ordreggraphs",
+                    fluidRow(
+                        bs4Card(
+                            title = "Ordinal Regression Graph",
+                            maximizable = TRUE,
+                            width = 6,
+                            selectizeInput(
+                                inputId = "race1", 
+                                label = "Select a race", 
+                                choices = unique(recData$race), 
+                                selected = "Caucasian",
+                                multiple = FALSE
+                            ),
+                            plotlyOutput(outputId = "plot1")
+                        ),
+                        bs4Card(
+                            title = "Ordinal Regression Graph",
+                            maximizable = TRUE,
+                            width = 6,
+                            selectizeInput(
+                                inputId = "race2", 
+                                label = "Select a race", 
+                                choices = unique(recData$race), 
+                                selected = "Asian",
+                                multiple = FALSE
+                            ),
+                            plotlyOutput(outputId = "plot2")
+                        )
+                    )
                 ),
-                plotlyOutput(outputId = "plot1")
-            ),
-            bs4Card(
-                title = "Ordinal Regression Model",
-                maximizable = TRUE,
-                width = 12,
-                selectizeInput(
-                    inputId = "races", 
-                    label = "Race", 
-                    choices = unique(recData$race), 
-                    selected = "Caucasian",
-                    multiple = FALSE
-                ),
-                numericInput("age", "Age", 25, min = 0, max = 100),
-                selectizeInput(
-                    inputId = "sex", 
-                    label = "Sex", 
-                    choices = unique(recData$sex), 
-                    selected = "Male",
-                    multiple = FALSE
-                ),
-                numericInput("juvFelCount", "Juvinile Felony Count", 0, min = 0, max = 20),
-                numericInput("juvMisdCount", "Juvinile Misdemeanor Count", 0, min = 0, max = 20),
-                numericInput("juvOtherCount", "Juvinile Other Charges Count", 0, min = 0, max = 20),
-                numericInput("priorsCount", "Prior Charges Count", 0, min = 0, max = 20),
-                numericInput("daysBScreeningArrest", "Days Before Screening Arrest", 90, min = 0, max = 365),
-                numericInput("cDaysFromCompas", "Days From Compas", 30, min = 0, max = 365),
-                
-                numericInput("cTimeInJail", "Time In Jail", 60, min = 0, max = 10000)
-                
+                tabItem(tabName = "ordregmodel",
+                    bs4Card(
+                        title = "Ordinal Regression Model",
+                        maximizable = TRUE,
+                        width = 12,
+                        selectizeInput(
+                            inputId = "mRace", 
+                            label = "Race", 
+                            choices = unique(recData$race), 
+                            selected = "Caucasian",
+                            multiple = FALSE
+                        ),
+                        numericInput("age", "Age", 25, min = 0, max = 100),
+                        selectizeInput(
+                            inputId = "sex", 
+                            label = "Sex", 
+                            choices = unique(recData$sex), 
+                            selected = "Male",
+                            multiple = FALSE
+                        ),
+                        numericInput("juvFelCount", "Juvinile Felony Count", 0, min = 0, max = 20),
+                        numericInput("juvMisdCount", "Juvinile Misdemeanor Count", 0, min = 0, max = 20),
+                        numericInput("juvOtherCount", "Juvinile Other Charges Count", 0, min = 0, max = 20),
+                        numericInput("priorsCount", "Prior Charges Count", 0, min = 0, max = 20),
+                        numericInput("daysBScreeningArrest", "Days Before Screening Arrest", 90, min = 0, max = 365),
+                        numericInput("cDaysFromCompas", "Days From Compas", 30, min = 0, max = 365),
+                        selectizeInput(
+                            inputId = "cChargeDegree", 
+                            label = "Charge Degree", 
+                            choices = unique(recData$c_charge_degree), 
+                            selected = "M",
+                            multiple = FALSE
+                        ),
+                        numericInput("cTimeInJail", "Time In Jail", 60, min = 0, max = 10000),
+                        actionButton(
+                            "runModel", "Run Model", 
+                            status = "primary", 
+                            flat = FALSE
+                        ),
+                        verbatimTextOutput(outputId = "result")
+                    )
+                )
             )
         )
     ),
@@ -160,22 +197,55 @@ shinyApp(
         currData <- dataCleaning(recData)
         
         output$plot1 <- renderPlotly({
-            
-            p1 <- plot_ly(currData, x = ~score_text, y = ~age, colors='Reds') %>%
-                filter(currData$sex == 'Male') %>%
-                filter(race %in% input$races) %>%
+            plot_ly(currData, x = ~score_text, y = ~age, colors='Dark2') %>%
+                filter(race %in% input$race1) %>%
                 group_by(race) %>%
-                add_boxplot(color=~score_text)
-            
-            p2 <- plot_ly(currData, x = ~score_text, y = ~age, colors='Reds') %>%
-                filter(currData$sex == 'Female') %>%
-                filter(race %in% input$races) %>%
-                group_by(race) %>%
-                add_boxplot(color=~score_text)
-            
-            subplot(p1, p2, shareX = FALSE) %>% 
-                layout(xaxis=list(title='Compas Score'), yaxis=list(title='Age'))
+                layout(title = "Ordinal Regression based on Race", 
+                       xaxis=list(title="Risk Categorization"),
+                       yaxis=list(title="Age")) %>%
+                add_boxplot(color=~score_text, 
+                            line = list(color = '#000000'),
+                            marker = list(color = '#000000'))
                     
         })
+        
+        output$plot2 <- renderPlotly({
+            plot_ly(currData, x = ~score_text, y = ~age, colors='Dark2') %>%
+                filter(race %in% input$race2) %>%
+                group_by(race) %>%
+                layout(title = "Ordinal Regression based on Race", 
+                       xaxis=list(title="Risk Categorization"),
+                       yaxis=list(title="Age")) %>%
+                add_boxplot(color=~score_text,
+                            line = list(color = '#000000'),
+                            marker = list(color = '#000000'))
+            
+        })
+        
+        observeEvent(input$runModel, {
+            output$result <- renderText({
+                
+                output <- ordinalRegression(input$mRace,
+                                            input$age,
+                                            input$sex,
+                                            input$juvFelCount,
+                                            input$juvMisdCount,
+                                            input$juvOtherCount,
+                                            input$priorsCount,
+                                            input$daysBScreeningArrest,
+                                            input$cDaysFromCompas,
+                                            input$cChargeDegree,
+                                            input$cTimeInJail)
+                
+                
+                    paste("Model results: ", output, "\r\n", sep="")
+                
+                
+                
+                
+                
+            })
+        })
+        
     }
 )
