@@ -1,15 +1,21 @@
 library(dplyr)
 library(lubridate)
 
-setwd('~/Documents/inds4997-datasciencecapstone')
+set.seed(50)
+setwd('~/GitHub/inds4997-datasciencecapstone')
 data <- read.csv('./data/compas-scores.csv')
 
 # Remove unnecessary columns
 data <- select(data, c(sex, age, age_cat, race, juv_fel_count, juv_misd_count, juv_other_count, priors_count, days_b_screening_arrest, c_days_from_compas, c_jail_in, c_jail_out, c_charge_degree, c_charge_desc, is_recid, decile_score, score_text))
 
 # Remove N/A's found in score_text
+# Remove |days_b_screening_arrest| > 30 because we do not necessarliy have the right offense
+# Remove is_recid = -1 because they do not have recidivate information on that person
 data <- data %>% 
-  filter(!score_text == "N/A")
+  filter(!score_text == "N/A") %>%
+  filter(days_b_screening_arrest <= 30) %>%
+  filter(days_b_screening_arrest >= -30) %>%
+  filter(!is_recid == -1)
 
 # Order Score Text for graph processing later
 data$score_text <- factor(data$score_text, 
@@ -200,7 +206,7 @@ data$c_jail_out <- ymd_hms(data$c_jail_out)
 
 # Add column that represents how long person spent in jail in days
 data <- data %>% rowwise() %>%
-  mutate(c_time_in_jail = difftime(c_jail_out, c_jail_in, units = "days"))
+  mutate(c_time_in_jail = round(difftime(c_jail_out, c_jail_in, units = "days")))
 
 # Set rows without a time for jail to 0
 data$c_time_in_jail[is.na(data$c_time_in_jail)] <- 0
@@ -208,5 +214,22 @@ data$c_time_in_jail[is.na(data$c_time_in_jail)] <- 0
 # Change time spent in jail's data type to be a number
 data <- transform(data, c_time_in_jail = as.numeric(c_time_in_jail))
 
-# Export data frame to csv
-write.csv(data,'./data/compas-scores-updated.csv', row.names = FALSE)
+# Shuffle row indices
+rows <- sample(nrow(data))
+
+# Randomly order data for 80/20 Training/Testing split
+shuffled_data <- data[rows, ]
+
+# Determine row to split on: split
+split <- round(nrow(shuffled_data) * 0.80)
+
+# Training data
+training_data <- shuffled_data[1:split, ]
+
+# Testing data
+testing_data <- shuffled_data[(split + 1):nrow(shuffled_data), ]
+
+# Export data to csv files
+write.csv(shuffled_data,'./data/compas-scores-updated.csv', row.names = FALSE)
+write.csv(training_data,'./data/compas-scores-updated-training.csv', row.names = FALSE)
+write.csv(testing_data,'./data/compas-scores-updated-testing.csv', row.names = FALSE)
