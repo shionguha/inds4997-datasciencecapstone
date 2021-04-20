@@ -1,4 +1,4 @@
-### HELPER FUNCTIONS ###
+### HELPER FUNCTIONS (from fairmodels package) ###
 
 
 fairness_check_metrics <- function(){
