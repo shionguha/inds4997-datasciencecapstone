@@ -46,11 +46,11 @@ dataCleaning <- function(data) {
 
 shinyApp(
     ui = dashboardPage(
-        title = "INDS 4997 Dashboard",
+        title = "Compas Debiasing",
         fullscreen = TRUE,
         header = dashboardHeader(
             title = dashboardBrand(
-                title = "INDS 4997",
+                title = "Compas Debiasing",
                 color = "primary",
                 image = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Marquette_Golden_Eagles_logo.svg/1200px-Marquette_Golden_Eagles_logo.svg.png"
             ),
@@ -67,25 +67,25 @@ shinyApp(
             elevation = 3,
             sidebarMenu(
                 menuItem(
-                    "Ordinal Regression Graphs",
-                    tabName = "ordreggraphs",
-                    icon = icon("chart-bar")
+                    "Home",
+                    tabName = "homepage",
+                    icon = icon("home")
                 ),
                 menuItem(
-                    "Selectable Model",
-                    tabName = "selectmodel",
+                    "Model Playground",
+                    tabName = "orgregmodel",
                     icon = icon("layer-group")
-                ),
-                menuItem(
-                    "Ordinal Regression Model",
-                    tabName = "ordregmodel",
-                    icon = icon("calculator")
                 )
             )
         ),
         body = dashboardBody(
             tabItems(
-                tabItem(tabName = "ordreggraphs",
+                tabItem(tabName = "homepage",
+                        jumbotron(
+                            title = "Welcome!",
+                            lead = "Our model reduces bias by 30% compared to the predictive sentencing algorithm presented by Compas.",
+                            status = "primary"
+                        ),
                     fluidRow(
                         bs4Card(
                             title = "Ordinal Regression Graph",
@@ -190,8 +190,6 @@ shinyApp(
                         numericInput("juvMisdCount", "Juvenile Misdemeanor Count", NULL, min = 0, max = 20),
                         numericInput("juvOtherCount", "Juvenile Other Charges Count", NULL, min = 0, max = 20),
                         numericInput("priorsCount", "Prior Charges Count", NULL, min = 0, max = 20),
-                        numericInput("daysBScreeningArrest", "Days Before Screening Arrest", NULL, min = 0, max = 365),
-                        numericInput("cDaysFromCompas", "Days From Compas", NULL, min = 0, max = 365),
                         selectInput(
                             inputId = "cChargeDegree", 
                             label = "Charge Degree", 
@@ -211,9 +209,6 @@ shinyApp(
                         title = "Model Output",
                         maximizable = TRUE,
                         width = 6,
-                        verbatimTextOutput(outputId = "modelForm"),
-                        verbatimTextOutput(outputId = "modelResult"),
-                        br(),
                         verbatimTextOutput(outputId = "inputtedModelResult")
                     )
                     )
@@ -300,14 +295,6 @@ shinyApp(
                 predictors['priors_count'] = input$priorsCount
             }
             
-            if(!is.na(input$daysBScreeningArrest)) {
-                predictors['days_b_screening_arrest'] = input$daysBScreeningArrest
-            }
-            
-            if(!is.na(input$cDaysFromCompas)) {
-                predictors['c_days_from_compas'] = input$cDaysFromCompas
-            }
-            
             if(input$cChargeDegree!="") {
                 predictors['c_charge_degree'] = input$cChargeDegree
             }
@@ -315,8 +302,6 @@ shinyApp(
             if(!is.na(input$cTimeInJail)) {
                 predictors['c_time_in_jail'] = input$cTimeInJail
             }
-            
-            print(length(predictors))
             
             validate(
                 need(length(predictors) != 0, "Please select at least one attribute")
@@ -328,14 +313,6 @@ shinyApp(
             prediction <- as.data.frame(bind_rows(setNames(predictors, names(predictors))))
             
             tested_model <- round(predict(ordReg,prediction,type = "p"), 3)
-            
-            output$modelForm <- renderText({
-                form
-            })
-            
-            output$modelResult <- renderPrint({
-                ordReg
-            })
             
             output$inputtedModelResult <- renderPrint({
                 print("Using your parameters:")
