@@ -7,7 +7,7 @@ library(dplyr)
 library(lubridate)
 library(caret)
 
-recData <- read.csv('../../data/compas-scores.csv')
+recData <- read.csv('./data/compas-scores-updated.csv')
 
 dataCleaning <- function(data) {
     # Remove unnecessary columns
