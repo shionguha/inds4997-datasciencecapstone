@@ -96,6 +96,27 @@ gbm_explainer_w <- explain(gbm_weighted,
 fobject <- fairness_check(fobject, gbm_explainer_w, verbose = FALSE)
 plot(fobject)
 
+#--------------
+# ROC 
+
+gbm_explainer_r <- roc_pivot(gbm_explainer,
+                             protected = protected,
+                             privileged = "Caucasian")
+
+
+
+fobject <- fairness_check(fobject, gbm_explainer_r, 
+                          label = "ROC",  # label as vector for explainers
+                          verbose = FALSE) 
+
+plot(fobject)
+
+
+
+
+
+
+
 
 dataTest$c_charge_degree   <- as.factor(dataTest$c_charge_degree)
 dataTest$c_charge_violent   <- as.factor(dataTest$c_charge_violent)
@@ -105,8 +126,14 @@ n<- nrow(dataTest)
 out=c()
 out2=c()
 temp=c()
+roc =c()
 temp2=c()
+temp3=c()
+temp4=c()
 i=1
+
+
+#Testing for best cutoff 
 while(i<n+1){
   out[i]<- predict(gbm_explainer,dataTest[i,])
   temp[i]<- if (predict(gbm_explainer,dataTest[i,])>0.7) { 
@@ -116,22 +143,32 @@ while(i<n+1){
   } else {
     "Medium"
   }
-  out2[i]<- predict(gbm_explainer_w,dataTest[i,])
-  temp2[i]<- if (predict(gbm_explainer_w,dataTest[i,])>0.7) { 
+  
+
+  temp2[i]<- if (predict(gbm_explainer_w,dataTest[i,])>0.7) {
     "Low"
   } else if (predict(gbm_explainer_w,dataTest[i,])<0.4){
     "High"
   } else {
     "Medium"
   }
-  i=i+1
+
+  roc[i]<- if (predict(gbm_explainer_r,dataTest[i,])>0.7) { 
+    "Low"
+  } else if (predict(gbm_explainer_r,dataTest[i,])<0.4){
+    "High"
+  } else {
+    "Medium"
+  }
+  
+
 }
 
 #Appending predictions to df
-dataTest$gbmRaw<-out
-dataTest$weightedRaw<-out2
 dataTest$gbm<-temp
 dataTest$weighted<-temp2
+dataTest$roc<-roc
+
 
 #Saving to new CSV
 write.csv(dataTest,'./data/compas-scores-predictions.csv', row.names = FALSE)
