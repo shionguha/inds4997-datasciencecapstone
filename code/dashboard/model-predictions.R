@@ -50,7 +50,7 @@ dataTest$model<-temp
 
 # Creating gbm model and applying reweighing
 
-dataTrain <- read.csv('./data/compas-scores-updated-training.csv')
+#dataTrain <- read.csv('./data/compas-scores-updated-training.csv')
 dataTrain <- dataTrain %>% 
   filter(!score_text == "Medium")
 
@@ -58,7 +58,7 @@ dataTrain <- dataTrain %>%
 dataTrain$score <- ifelse(dataTrain$score_text=="Low",1,0)
 
 #Race is our protected class
-protected     <- as.factor(dataTrain$race)
+protected <- as.factor(dataTrain$race)
 
 dataTrain$c_charge_degree   <- as.factor(dataTrain$c_charge_degree)
 dataTrain$c_charge_violent   <- as.factor(dataTrain$c_charge_violent)
@@ -82,7 +82,7 @@ fobject <- fairness_check(gbm_explainer,
 
 weights <- reweight(protected = protected, y = dataTrain$score)
 
-set.seed(1)
+#set.seed(1)
 
 gbm_weighted <-gbm(score ~ age + juv_fel_count + juv_misd_count + juv_other_count + priors_count + c_charge_degree + c_charge_violent + c_time_in_jail , data = dataTrain, weights = weights, distribution = "bernoulli")
 
@@ -97,8 +97,10 @@ fobject <- fairness_check(fobject, gbm_explainer_w, verbose = FALSE)
 plot(fobject)
 
 
-dataTest$c_charge_degree   <- as.factor(dataTest$c_charge_degree)
-dataTest$c_charge_violent   <- as.factor(dataTest$c_charge_violent)
+#### STOP HERE ####
+
+# dataTest$c_charge_degree   <- as.factor(dataTest$c_charge_degree)
+# dataTest$c_charge_violent   <- as.factor(dataTest$c_charge_violent)
 
 #Creating vector that will hold model predictions for each record in dataset
 n<- nrow(dataTest)
