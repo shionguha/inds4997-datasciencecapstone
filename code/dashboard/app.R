@@ -5,8 +5,9 @@ library(MASS)
 library(tidyverse)
 library(dplyr)
 library(lubridate)
+library(caret)
 
-recData <- read.csv('../../data/compas-scores.csv')
+recData <- read.csv('./data/compas-scores-updated.csv')
 
 dataCleaning <- function(data) {
     # Remove unnecessary columns
@@ -43,51 +44,13 @@ dataCleaning <- function(data) {
     return(data)
 }
 
-ordinalRegression <- function(raceIn, 
-                              ageIn, 
-                              sexIn, 
-                              juvFelCountIn, 
-                              juvMisdCountIn, 
-                              juvOtherCountIn,
-                              priorsCountIn,
-                              daysBScreeningArrestIn, 
-                              cDaysFromCompasIn,
-                              cChargeDegreeIn,
-                              cTimeInJailIn) {
-    
-    ## Clean data ##
-    cleanedData <- dataCleaning(recData)
-    
-    ## Data Processing / Analysis ##
-    
-    # Create Ordinal Logistic Model
-    model_fit <- polr(score_text ~ race + age + sex + juv_fel_count + juv_misd_count + juv_other_count + priors_count + days_b_screening_arrest + c_days_from_compas + c_charge_degree + c_time_in_jail, data = cleanedData, Hess = TRUE)
-    
-    # Test data against model
-    prediction <- data.frame("race"= raceIn, 
-                             "age" = ageIn, 
-                             "sex"=sexIn, 
-                             "juv_fel_count" = juvFelCountIn, 
-                             "juv_misd_count" = juvMisdCountIn, 
-                             "juv_other_count" = juvOtherCountIn, 
-                             "priors_count" = priorsCountIn, 
-                             "days_b_screening_arrest" = daysBScreeningArrestIn, 
-                             "c_days_from_compas" = cDaysFromCompasIn, 
-                             "c_charge_degree" = cChargeDegreeIn, 
-                             "c_time_in_jail" = cTimeInJailIn)
-    output <- round(predict(model_fit,prediction,type = "p"), 3)
-    
-    return(output)
-    
-}
-
 shinyApp(
     ui = dashboardPage(
-        title = "INDS 4997 Dashboard",
+        title = "Compas Debiasing",
         fullscreen = TRUE,
         header = dashboardHeader(
             title = dashboardBrand(
-                title = "INDS 4997",
+                title = "Compas Debiasing",
                 color = "primary",
                 image = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Marquette_Golden_Eagles_logo.svg/1200px-Marquette_Golden_Eagles_logo.svg.png"
             ),
@@ -104,20 +67,25 @@ shinyApp(
             elevation = 3,
             sidebarMenu(
                 menuItem(
-                    "Ordinal Regression Graphs",
-                    tabName = "ordreggraphs",
-                    icon = icon("chart-bar")
+                    "Home",
+                    tabName = "homepage",
+                    icon = icon("home")
                 ),
                 menuItem(
-                    "Ordinal Regression Model",
-                    tabName = "ordregmodel",
-                    icon = icon("calculator")
+                    "Model Playground",
+                    tabName = "orgregmodel",
+                    icon = icon("layer-group")
                 )
             )
         ),
         body = dashboardBody(
             tabItems(
-                tabItem(tabName = "ordreggraphs",
+                tabItem(tabName = "homepage",
+                        jumbotron(
+                            title = "Welcome!",
+                            lead = "Our model reduces bias by 30% compared to the predictive sentencing algorithm presented by Compas.",
+                            status = "primary"
+                        ),
                     fluidRow(
                         bs4Card(
                             title = "Ordinal Regression Graph",
@@ -147,46 +115,102 @@ shinyApp(
                         )
                     )
                 ),
+                tabItem(tabName = "selectmodel",
+                        fluidRow(
+                            bs4Card(
+                                title = "Selectable Attributes",
+                                maximizable = FALSE,
+                                collapsible = FALSE,
+                                width = 3,
+                                checkboxGroupInput("attr", "Predictors", 
+                                                   choiceNames = 
+                                                       c("Race",
+                                                        "Age",
+                                                        "Sex",
+                                                        "Juvenile Felony Count",
+                                                        "Juvenile Misdemeanor Count",
+                                                        "Juvenile Other Charges Count",
+                                                        "Prior Charges Count",
+                                                        "Days Before Screening Arrest",
+                                                        "Days From Compas",
+                                                        "Charge Degree",
+                                                        "Time in Jail"), 
+                                                   choiceValues = 
+                                                       c("race",
+                                                         "age",
+                                                         "sex",
+                                                         "juv_fel_count",
+                                                         "juv_misd_count",
+                                                         "juv_other_count",
+                                                         "priors_count",
+                                                         "days_b_screening_arrest",
+                                                         "c_days_from_compas",
+                                                         "c_charge_degree",
+                                                         "c_time_in_jail")
+                                                   ),
+                                
+                                actionButton(
+                                    "runCustomModel", "Run Model", 
+                                    status = "primary", 
+                                    outline = TRUE,
+                                    size = "lg"
+                                )
+                            ),
+                            bs4Card(
+                                title = "Output",
+                                maximizable = TRUE,
+                                width = 9,
+                                verbatimTextOutput(outputId = "customModelResult")
+                            )
+                        )
+                ),
                 tabItem(tabName = "ordregmodel",
+                    fluidRow(
                     bs4Card(
                         title = "Ordinal Regression Model",
-                        maximizable = TRUE,
-                        width = 12,
-                        selectizeInput(
+                        maximizable = FALSE,
+                        collapsible = FALSE,
+                        width = 6,
+                        selectInput(
                             inputId = "mRace", 
                             label = "Race", 
-                            choices = unique(recData$race), 
-                            selected = "Caucasian",
+                            choices = c("", unique(recData$race)), 
+                            selected = NULL,
                             multiple = FALSE
                         ),
-                        numericInput("age", "Age", 25, min = 0, max = 100),
-                        selectizeInput(
+                        numericInput("age", "Age", NULL, min = 0, max = 100),
+                        selectInput(
                             inputId = "sex", 
                             label = "Sex", 
-                            choices = unique(recData$sex), 
-                            selected = "Male",
+                            choices = c("", unique(recData$sex)), 
+                            selected = NULL,
                             multiple = FALSE
                         ),
-                        numericInput("juvFelCount", "Juvinile Felony Count", 0, min = 0, max = 20),
-                        numericInput("juvMisdCount", "Juvinile Misdemeanor Count", 0, min = 0, max = 20),
-                        numericInput("juvOtherCount", "Juvinile Other Charges Count", 0, min = 0, max = 20),
-                        numericInput("priorsCount", "Prior Charges Count", 0, min = 0, max = 20),
-                        numericInput("daysBScreeningArrest", "Days Before Screening Arrest", 90, min = 0, max = 365),
-                        numericInput("cDaysFromCompas", "Days From Compas", 30, min = 0, max = 365),
-                        selectizeInput(
+                        numericInput("juvFelCount", "Juvenile Felony Count", NULL, min = 0, max = 20),
+                        numericInput("juvMisdCount", "Juvenile Misdemeanor Count", NULL, min = 0, max = 20),
+                        numericInput("juvOtherCount", "Juvenile Other Charges Count", NULL, min = 0, max = 20),
+                        numericInput("priorsCount", "Prior Charges Count", NULL, min = 0, max = 20),
+                        selectInput(
                             inputId = "cChargeDegree", 
                             label = "Charge Degree", 
-                            choices = unique(recData$c_charge_degree), 
-                            selected = "M",
+                            choices = c("", unique(recData$c_charge_degree)), 
+                            selected = NULL,
                             multiple = FALSE
                         ),
-                        numericInput("cTimeInJail", "Time In Jail", 60, min = 0, max = 10000),
+                        numericInput("cTimeInJail", "Time In Jail", NULL, min = 0, max = 10000),
                         actionButton(
                             "runModel", "Run Model", 
                             status = "primary", 
-                            flat = FALSE
-                        ),
-                        verbatimTextOutput(outputId = "result")
+                            outline = TRUE,
+                            size = "lg"
+                        )
+                    ),
+                    bs4Card(
+                        title = "Model Output",
+                        maximizable = TRUE,
+                        width = 6,
+                        verbatimTextOutput(outputId = "inputtedModelResult")
+                    )
                     )
                 )
             )
@@ -209,6 +233,23 @@ shinyApp(
                     
         })
         
+        observeEvent(input$runCustomModel, {
+            
+            validate(
+                need(input$attr != 0, "Please select at least one attribute")
+            )
+            
+            form <- sprintf("%s~%s","score_text",paste0(input$attr,collapse="+"))
+            ordReg <- polr(as.formula(form), data = currData, Hess = TRUE)
+            output$customModelResult <- renderPrint({
+                
+                print(form)
+                summary(ordReg)
+                
+            })
+            
+        })
+        
         output$plot2 <- renderPlotly({
             plot_ly(currData, x = ~score_text, y = ~age, colors='Dark2') %>%
                 filter(race %in% input$race2) %>%
@@ -223,27 +264,59 @@ shinyApp(
         })
         
         observeEvent(input$runModel, {
-            output$result <- renderText({
+            
+            predictors <- list()
+            
+            if(input$mRace!="") {
+                predictors['race'] = input$mRace
+            }
                 
-                output <- ordinalRegression(input$mRace,
-                                            input$age,
-                                            input$sex,
-                                            input$juvFelCount,
-                                            input$juvMisdCount,
-                                            input$juvOtherCount,
-                                            input$priorsCount,
-                                            input$daysBScreeningArrest,
-                                            input$cDaysFromCompas,
-                                            input$cChargeDegree,
-                                            input$cTimeInJail)
-                
-                
-                    paste("Model results: ", output, "\r\n", sep="")
-                
-                
-                
-                
-                
+            if(!is.na(input$age)) {
+                predictors['age'] = input$age
+            }
+            
+            if(input$sex!="") {
+                predictors['sex'] = input$sex
+            }
+            
+            if(!is.na(input$juvFelCount)) {
+                predictors['juv_fel_count'] = input$juvFelCount
+            }
+            
+            if(!is.na(input$juvMisdCount)) {
+                predictors['juv_misd_count'] = input$juvMisdCount
+            }
+            
+            if(!is.na(input$juvOtherCount)) {
+                predictors['juv_other_count'] = input$juvOtherCount
+            }
+            
+            if(!is.na(input$priorsCount)) {
+                predictors['priors_count'] = input$priorsCount
+            }
+            
+            if(input$cChargeDegree!="") {
+                predictors['c_charge_degree'] = input$cChargeDegree
+            }
+            
+            if(!is.na(input$cTimeInJail)) {
+                predictors['c_time_in_jail'] = input$cTimeInJail
+            }
+            
+            validate(
+                need(length(predictors) != 0, "Please select at least one attribute")
+            )
+            
+            form <- sprintf("%s~%s","score_text",paste0(names(predictors),collapse="+"))
+            ordReg <- polr(as.formula(form), data = currData, Hess = TRUE)
+            
+            prediction <- as.data.frame(bind_rows(setNames(predictors, names(predictors))))
+            
+            tested_model <- round(predict(ordReg,prediction,type = "p"), 3)
+            
+            output$inputtedModelResult <- renderPrint({
+                print("Using your parameters:")
+                print(tested_model)
             })
         })
         
