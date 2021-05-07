@@ -5,10 +5,10 @@ account: bcooley
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4072721
-bundleId: 4557542
+bundleId: 4568300
 url: https://bcooley.shinyapps.io/COMPAS-Debiasing-Dashboard/
-when: 1620163442.66565
-lastSyncTime: 1620163442.66565
+when: 1620359692.45571
+lastSyncTime: 1620359692.45571
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: model-predictions.R

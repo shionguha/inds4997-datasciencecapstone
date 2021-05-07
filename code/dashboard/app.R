@@ -11,7 +11,6 @@ library(fairmodels)
 library(DALEX)
 library(ranger)
 library(gbm)
-library(jtools)
 
 dataTrain <- read.csv('./data/compas-scores-updated-training.csv')
 dataTest <- read.csv('./data/compas-scores-updated-testing.csv')
@@ -97,7 +96,7 @@ shinyApp(
                             lead = "Our model reduces bias by approximately 43% compared to the predictive sentencing algorithm presented by Compas.",
                             "Learn more by reading our paper on it.",
                             btnName = "See the Paper",
-                            href="https://www.google.com/",
+                            href="https://drive.google.com/file/d/1CUFcprLasW20LwJLiSIemkJBV6AuSXsp/view?usp=sharing",
                             status = "primary"
                         ),
                     fluidRow(
